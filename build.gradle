@@ -1,0 +1,64 @@
+buildscript {
+    repositories {
+        //flatDir name: 'libs', dirs: "libs"
+        flatDir dirs: "${projectDir}/libs"
+        flatDir dirs: "libs"
+    }
+    dependencies {
+        classpath 'org.ajoberstar:grgit:2.2.0'
+    }
+}
+
+
+plugins {
+    // Apply the groovy plugin to add support for Groovy
+    id 'groovy'
+    //id 'java'
+
+    // Apply the application plugin to add support for building an application
+    id 'application'
+    id 'org.ajoberstar.grgit' version '2.2.0'
+}
+
+//version = "1.0.0-${grgit.head().abbreviatedId}"
+version = "1.0.0"
+
+
+def dirOfClone = "dirOfCloneIsUnspecified"
+def branchToCheckout = "branchToCheckoutIsUnspecified"
+def repoURI = "uriIsUnspecified"
+def taskName = "taskNameIsUnspecified"
+def buildFile = "buildFileIsUnspecified"
+
+
+def cloneProject(dirOfClone, branchToCheckout, repoURI) {
+    def folder = new File( dirOfClone )
+
+    if(!folder.exists()) {
+        grgit.clone(dir: dirOfClone, uri: repoURI, refToCheckout: branchToCheckout)
+    }
+}
+
+def createBuildTask(taskName, dirOfClone) {
+
+    task "$taskName"(type: GradleBuild, dependsOn: dance) {
+        buildFile = dirOfClone+"/build.gradle"
+        setBuildDir(buildFile)
+        setDir( dirOfClone )
+        tasks = ['clean', 'build']
+    }
+}
+
+task cloneAllAndCreateBuildTasks(type: GradleBuild) {
+    //configuration time, add dynamically generated tasks to task graph
+
+    dirOfClone = "banana"
+    branchToCheckout = "nameOfDesiredBranch"
+    repoURI = "https://gitlab.com/projectOwnerUserName/projectName.git"
+
+    cloneProject(dirOfClone, branchToCheckout, repoURI)
+    createBuildTask("build"+dirOfClone, dirOfClone)
+
+}
+
+task winning(dependsOn: ['cloneAllAndCreateBuildTasks', 'buildbanana'])
